@@ -1,0 +1,157 @@
+---
+---
+<html lang="et">
+  <head>
+    <title>Registreerimisvorm | Astro</title>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        background-color: #f0f0f0;
+        margin: 0;
+        padding: 2rem;
+        font-family: Arial, sans-serif;
+      }
+      main {
+        max-width: 600px; /* <-- Kitsam, umbes nagu Next.js-is */
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem; /* Väiksem vahe pealkirjaga */
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+      label {
+        margin-top: 0.1rem;
+        margin-bottom: 0.1rem; /* Väiksem vahe labeli ja inputi vahel */
+      }
+      input, button {
+        padding: 0.1rem; /* Madalamad väljad */
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+      input {
+        margin-bottom: 0.25rem; /* Väiksem vahe väljade vahel */
+      }
+      button {
+        background-color: #0070f3;
+        color: white;
+        border: none;
+        cursor: pointer;
+        margin-top: 1rem; /* Üksainus väiksem vahe nupule */
+        transition: background-color 0.3s;
+      }
+      button:hover {
+        background-color: #005bb5;
+      }
+    </style>
+    
+    
+  </head>
+  <body>
+    <main>
+      <h1>Astro abil loodud registreerimisvorm</h1>
+
+      <form id="registerForm">
+        <label for="username">Kasutajanimi</label>
+        <input type="text" id="username" name="username" required />
+
+        <label for="email">E-post</label>
+        <input type="email" id="email" name="email" required />
+
+        <label for="password">Parool</label>
+        <input type="password" id="password" name="password" required />
+
+        <label for="confirmPassword">Kinnita parool</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required />
+
+        <div id="errorMessage" style="color: red; display: none; margin-top: 0.5rem;"></div>
+        <div id="successMessage" style="color: green; display: none; margin-top: 0.5rem;"></div>
+
+        <button type="submit">Registreeru</button>
+      </form>
+
+      <script type="module">
+        document.addEventListener('DOMContentLoaded', () => {
+          const form = document.getElementById('registerForm');
+          const username = document.getElementById('username');
+          const email = document.getElementById('email');
+          const password = document.getElementById('password');
+          const confirmPassword = document.getElementById('confirmPassword');
+          const errorMessage = document.getElementById('errorMessage');
+          const successMessage = document.getElementById('successMessage');
+      
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+      
+            // Puhastame eelnevad sõnumid
+            errorMessage.style.display = 'none';
+            errorMessage.innerText = '';
+            successMessage.style.display = 'none';
+            successMessage.innerText = '';
+      
+            // Kontroll paroolide kattuvuse kohta
+            if (password.value !== confirmPassword.value) {
+              errorMessage.innerText = 'Paroolid ei kattu!';
+              errorMessage.style.display = 'block';
+              return;
+            }
+      
+            try {
+              // Esiteks kontrollime, kas kasutajanimi on juba olemas
+              const response = await fetch('/api/check-username', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: username.value }),
+              });
+      
+              const data = await response.json();
+      
+              if (data.exists) {
+                errorMessage.innerText = 'Kasutajanimi on juba võetud!';
+                errorMessage.style.display = 'block';
+                return;
+              }
+      
+              // Kui kasutajanimi on vaba, saadame registreerimispäringu
+              const registerResponse = await fetch('/api/check-username', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: username.value, register: true }),
+              });
+      
+              const registerData = await registerResponse.json();
+      
+              if (registerData.success) {
+                successMessage.innerText = 'Edukalt registreeritud!';
+                successMessage.style.display = 'block';
+                form.reset();
+              } else {
+                errorMessage.innerText = 'Registreerimine ebaõnnestus. Palun proovi uuesti.';
+                errorMessage.style.display = 'block';
+              }
+      
+            } catch (error) {
+              console.error('Fetch error:', error);
+              errorMessage.innerText = 'Võrgu viga. Palun proovi uuesti.';
+              errorMessage.style.display = 'block';
+            }
+          });
+        });
+      </script>
+      
+
+    </main>
+  </body>
+</html>
